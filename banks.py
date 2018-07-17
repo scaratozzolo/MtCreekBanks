@@ -15,36 +15,50 @@ class Bank(object):
         self.__notes = ""
 
     def number(self):
+        """Returns bank number"""
         return self.__number
 
     def banktype(self):
+        """Returns bank type"""
         return self.__type
 
     def out(self):
+        """Returns true if out in the park"""
         return self.__out
 
     def signed_in(self):
+        """Returns true if it has been signed back in, but still considered out in the park"""
         return self.__signed_in
 
     def returned(self):
+        """Returns true if it has been marked return"""
         return self.__returned
 
     def made(self):
+        """Returns true if made and ready to be signed out"""
         return self.__made
 
     def amount(self):
+        """Returns the amount of money in the bank"""
         return self.__amount
 
     def notes(self):
+        """Returns the notes for the bank"""
         return self.__notes
 
     def signoutinfo(self):
+        """Returns the current sign out info for the bank"""
         return self.__out_info
 
     def signoutlog(self):
+        """Returns the log of sign out info"""
         return self.__out_log
 
     def signout(self, name, location, notes):
+        """Signs out the bank
+        name = name of person signing it out
+        location = where they're taking it
+        notes= special notes related to the bank"""
         if not self.__out and self.__signed_in and self.__returned and self.__made:
             self.__out = True
             self.__signed_in = False
@@ -59,12 +73,15 @@ class Bank(object):
             print("That bank is already out")
 
     def signin(self, name):
+        """Signs the bank back in
+        name = person signing it in"""
         if self.__out and not self.__signed_in and not self.__returned:
             self.__signed_in = True
             self.__out_info["Name_In"] = name
             self.__out_info["Time_In"] = datetime.now()
 
     def returnbank(self):
+        """Marks the bank returned"""
         if self.__out and self.__signed_in and not self.__returned:
             self.__returned = True
             self.__out = False
@@ -72,6 +89,8 @@ class Bank(object):
             self.__out_log["{}/{}/{} {}:{}".format(datetime.now().month, datetime.now().day, datetime.now().year, datetime.now().hour, datetime.now().minute)] = self.__out_info
 
     def makebank(self, amount):
+        """Make the bank and prepare it to be signed out
+        amount = amount of money in bank"""
         if self.__returned and not self.__made:
             self.__amount = str(amount)
             self.__made = True
