@@ -10,8 +10,8 @@ class Bank(object):
         self.__out_log = {}
         self.__out_info = {}
         self.__returned = True
-        self.__made = True             #check if the bank was made, also how much money was put in, update signout to make sure its made
-        self.__amount = "0"
+        self.__made = False
+        self.__amount = 350
         self.__notes = ""
 
     def number(self):
@@ -65,7 +65,7 @@ class Bank(object):
             self.__returned = False
             self.__made = False
             self.__notes = notes
-            self.__out_info = {"Name_Out":name, "Location":location, "Amount":self.__amount, "Time_Out":datetime.now(), "Returned":self.__returned}
+            self.__out_info = {"Name_Out":name, "Location":location, "Amount":self.__amount, "Time_Out":datetime.now(), "Name_In": None, "Time_In": None, "Returned":self.__returned}
             if self.__notes != "":
                 self.__out_info["Notes"] = self.__notes
 
@@ -86,25 +86,27 @@ class Bank(object):
             self.__returned = True
             self.__out = False
             self.__out_info["Returned"] = self.__returned
+            self.__out_info["Returned_Time"] = datetime.now()
             self.__out_log["{}/{}/{} {}:{}".format(datetime.now().month, datetime.now().day, datetime.now().year, datetime.now().hour, datetime.now().minute)] = self.__out_info
 
     def makebank(self, amount):
         """Make the bank and prepare it to be signed out
         amount = amount of money in bank"""
         if self.__returned and not self.__made:
-            self.__amount = str(amount)
+            self.__amount = amount
             self.__made = True
 
     def __str__(self):
         return "{} #{}".format(self.__type, self.__number)
 
-
+#REMOVE PRINT STATEMENTS AND TURN THEM INTO RETURNS SO ERROR MESSAGES CAN BE CREATED
 
 class Bar(object):
 
     def __init__(self):
 
         self.__banks = []
+        self.__locations = ["Beach Bar", "Big Bear Bar"]
 
     def addbank(self, number):
         """Adds a new bank to the list"""
@@ -113,8 +115,10 @@ class Bar(object):
             if bank.number() == str(number):
                 found = True
                 print("Bank already exists")
+                return False, 0
         if not found:
             self.__banks.append(Bank(number, "bar"))
+            return True, 0
 
     def removebank(self, number):
         """Removes a bank from the list"""
@@ -123,12 +127,42 @@ class Bar(object):
             if bank.number() == str(number):
                 found = True
                 self.__banks.remove(bank)
+                return True, 0
         if not found:
             print("Bank not found")
+            return False, 0
 
     def banks(self):
         """Returns the list of banks"""
         return self.__banks
+
+    def addlocation(self, location):
+        """Add a location to the list"""
+        found = False
+        for loc in self.__locations:
+            if loc == location:
+                found = True
+                print("Location already exists")
+                return False, 0
+        if not found:
+            self.__locations.append(location)
+            return True, 0
+
+    def removelocation(self, location):
+        """Removes a bank from the list"""
+        found = False
+        for loc in self.__locations:
+            if loc == location:
+                found = True
+                self.__locations.remove(loc)
+                return True, 0
+        if not found:
+            print("Location not found")
+            return False, 0
+
+    def locations(self):
+        """Returns a list of locations"""
+        return self.__locations
 
     def signout(self, name, location, number, notes = ""):
         """
@@ -144,14 +178,18 @@ class Bar(object):
                 found = True
                 if not bank.out() and bank.signed_in() and bank.returned():
                     bank.signout(name, location, notes)
+                    return True, 0
                 elif bank.out():
+                    return False, 1
                     print("Bank is out")
                 elif not bank.signed_in():
+                    return False, 2
                     print("Bank not signed in")
                 elif not bank.returned():
+                    return False, 3
                     print("Bank not returned")
         if not found:
-            print("Bank not found")
+            return False, 0
 
     def signedout(self):
         """Returns a list of all banks currently out"""
@@ -173,14 +211,18 @@ class Bar(object):
                 found = True
                 if bank.out() and not bank.signed_in() and not bank.returned():
                     bank.signin(name)
+                    return True, 0
                 elif not bank.out():
+                    return False, 1
                     print("Bank is not out")
                 elif bank.signed_in():
+                    return False, 2
                     print("Bank signed in")
                 elif bank.returned():
+                    return False, 3
                     print("Bank already returned")
         if not found:
-            print("Bank not found")
+            return False, 0
 
     def signedin(self):
         """Returns a list of banks that have been signed in"""
@@ -201,14 +243,18 @@ class Bar(object):
                 found = True
                 if bank.signed_in() and not bank.returned() and bank.out():
                     bank.returnbank()
+                    return True, 0
                 elif not bank.signed_in():
+                    return False, 1
                     print("Bank not signed in")
                 elif bank.returned():
+                    return False, 2
                     print("Bank already returned")
                 elif not bank.out():
+                    return False, 3
                     print("Bank is not out")
         if not found:
-            print("Bank not found")
+            return False, 0
 
     def returnedbanks(self):
         """
@@ -219,6 +265,24 @@ class Bar(object):
             if bank.returned():
                 returned.append(bank)
         return returned
+
+    def notreturnedbanks(self):
+        """
+        List of banks that have not been returned
+        """
+        notreturned = []
+        for bank in self.signedin():
+            if not bank.returned():
+                notreturned.append(bank)
+        return notreturned
+
+    def tobemade(self):
+        """Returns a list of banks ready to be made"""
+        tobe = []
+        for bank in self.__banks:
+            if bank.returned() and not bank.made():
+                tobe.append(bank)
+        return tobe
 
     def makebank(self, number, amount = "350"):
         """
@@ -232,11 +296,15 @@ class Bar(object):
                 found = True
                 if bank.returned() and not bank.made():
                     bank.makebank(amount)
+                    return True, 0
                 elif not bank.returned():
                     print("Bank not returned")
+                    return False, 1
                 elif bank.made():
                     print("Bank already made")
+                    return False, 2
         if not found:
+            return False, 0
             print("Bank not found")
 
     def madebanks(self):
@@ -261,6 +329,26 @@ class Bar(object):
                 return bank.notes()
         if not found:
             print("Bank not found")
+
+    def signoutinfo(self, number):
+        """Returns the current sign out info fo the bank"""
+        found = False
+        for bank in self.__banks:
+            if bank.number() == str(number):
+                found = True
+                return True, bank.signoutinfo()
+        if not found:
+            return False, 0
+
+    def banklog(self, number):
+        """Returns the bank log"""
+        found = False
+        for bank in self.__banks:
+            if bank.number() == str(number):
+                found = True
+                return True, bank.signoutlog()
+        if not found:
+            return False, 0
 
 
     def __str__(self):
@@ -386,6 +474,14 @@ class FB(object):
                 returned.append(bank)
         return returned
 
+    def tobemade(self):
+        """Returns a list of banks ready to be made"""
+        tobe = []
+        for bank in self.__banks:
+            if bank.returned() and not bank.made():
+                tobe.append(bank)
+        return tobe
+
     def makebank(self, number, amount = "350"):
         """
         Makes a bank, i.e. the bank is prepared and ready to be signed out
@@ -398,11 +494,15 @@ class FB(object):
                 found = True
                 if bank.returned() and not bank.made():
                     bank.makebank(amount)
+                    return True, 0
                 elif not bank.returned():
                     print("Bank not returned")
+                    return False, 1
                 elif bank.made():
                     print("Bank already made")
+                    return False, 2
         if not found:
+            return False, 0
             print("Bank not found")
 
     def madebanks(self):
