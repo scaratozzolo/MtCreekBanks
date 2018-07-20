@@ -122,7 +122,7 @@ class Tracking(tk.Tk):
 
         self.frames = {}
 
-        for F in (StartPage, BarPage, FBPage):
+        for F in (StartPage, BarPage):
 
             frame = F(container, self)
 
@@ -180,12 +180,13 @@ class BarPage(tk.Frame):
         returnbutton = tk.Button(self, text='RETURN', command=self.returnbank, height=4, width=10, font=("Verdana", 40, "bold"), background="#00ce03").grid(row=0, column=2, padx=10, pady=10, sticky="nsew")
         currentbankinfobutton = tk.Button(self, text="CURRENT\nBANK INFO", command=self.currentbankinfo, height=4, width=10, font=("Verdana", 40, "bold"), background="cyan").grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
         makebankbutton = tk.Button(self, text='MAKE BANK', command=self.makebank, height=4, width=10, font=("Verdana", 40, "bold"), background="#ff00ee").grid(row=1, column=1, padx=10, pady=10, sticky="nsew")
-        addlocbutton = tk.Button(self, text="ADD\nLOCATION", command=self.addloc, height=4, width=10, font=("Verdana", 40, "bold"), background="#0c00ff").grid(row=1, column=2, padx=10, pady=10, sticky="nsew")
-        removelocbutton = tk.Button(self, text="REMOVE\nLOCATION", command=self.removeloc, height=4, width=10, font=("Verdana", 40, "bold"), background="#00ffa1").grid(row=1, column=3, padx=10, pady=10, sticky="nsew")
+        managelocbutton = tk.Button(self, text="MANAGE\nLOCATIONS", command=self.managelocs, height=4, width=10, font=("Verdana", 40, "bold"), background="#0c00ff").grid(row=1, column=2, padx=10, pady=10, sticky="nsew")
         addbankbutton = tk.Button(self, text='ADD BANK', command=self.addbank, height=4, width=10, font=("Verdana", 40, "bold"), background="#8c00ff").grid(row=2, column=0, padx=10, pady=10, sticky="nsew")
         removebankbutton = tk.Button(self, text='REMOVE\nBANK', command=self.removebank, height=4, width=10, font=("Verdana", 40, "bold"), background="#ff9400").grid(row=2, column=1, padx=10, pady=10, sticky="nsew")
         banklogbutton = tk.Button(self, text="BANK LOG", command=self.banklog, height=4, width=10, font=("Verdana", 40, "bold"), background="#c896ff").grid(row=2, column=2, padx=10, pady=10, sticky="nsew")
         backbutton = tk.Button(self, text="BACK", command=lambda: controller.show_frame(StartPage), height=4, width=10, font=("Verdana", 40, "bold"), background="#7a7a7a").grid(row=2, column=3, padx=10, pady=10, sticky="nsew")
+
+        # testbutton = tk.Button(self, text="SECRET\nTESTING", command=self.managelocs, height=4, width=10, font=("Verdana", 40, "bold"), background="black").grid(row=1, column=5, padx=10, pady=10, sticky="nsew")
 
         self.barstats = tk.Label(self, text="Bar Banks Out: {}\n\nBar Banks In Audit: {}".format(len(bar.signedout()), len(bar.madebanks())), font=("Verdana", 20))
         self.barstats.grid(row=0, column=3, padx=10, pady=10)
@@ -558,63 +559,77 @@ class BarPage(tk.Frame):
 
         popup.mainloop()
 
-
-    def addloc(self):
-        """Popup for adding a location to bar options"""
+    def managelocs(self):
+        """Popup for adding and removing locations"""
         popup = tk.Tk()
-        popup.wm_title("Add Bar Location")
+        popup.wm_title("Manage Bar Locations")
 
-        locationlabel = tk.Label(popup, text="Location Name: ", font=("Verdana", 20)).grid(row=0, column=0, padx=10, pady=10)
-        locationentry = tk.Entry(popup, font=("Verdana", 20))
-        locationentry.grid(row=0, column=1, padx=10, pady=10)
 
-        submitbutton = tk.Button(popup, text="SUBMIT", font=("Verdana", 20), command = lambda: submit(locationentry.get())).grid(row=4, column=1, padx=10, pady=10)
+        def add(location):
 
-        def submit(location):
-            if location == "":
-                errorlabel = tk.Label(popup, text="Error: Please enter a location", fg="red", font=("Verdana", 10)).grid(row=5, column=1, padx=10, pady=10)
+            if location == "" or location == " ":
+                errorlabel.config(text="Error: Please enter a location", fg="red")
             else:
                 success, status = bar.addlocation(location)
                 if success:
-                    popup.destroy()
+                    errorlabel.config(text="Successfully added location", fg="blue")
                     save()
+                    refresh()
                 elif status == 0:
-                    errorlabel = tk.Label(popup, text="Error: That location already exists", fg="red", font=("Verdana", 10)).grid(row=5, column=1, padx=10, pady=10)
+                    errorlabel.config(text="Error: That location already exists", fg="red")
 
-        popup.mainloop()
+        def remove(location):
+            if location == "" or location == " ":
+                errorlabel2.config(text="Error: Please enter a location", fg="red")
+            else:
+                success, status = bar.removelocation(location)
+                if success:
+                    errorlabel2.config(text="Successfully removed location", fg="blue")
+                    save()
+                    refresh()
+                elif status == 0:
+                    errorlabel2.config(text="Error: That location does not exist", fg="red")
 
-    def removeloc(self):
-        """Popup for removing a location"""
-        popup = tk.Tk()
-        popup.wm_title("Remove Bar Location")
 
-        locationlabel = tk.Label(popup, text="Location: ", font=("Verdana", 20)).grid(row=0, column=0, padx=10, pady=10)
+        def refresh():
+            locdrop.children['menu'].delete(0, "end")
+            for loc in bar.locations():
+                locdrop.children['menu'].add_command(label=loc, command=lambda opt=loc: locvar.set(opt))
+            locvar.set("")
+
+        locationaddlabel = tk.Label(popup, text="Location Name: ", font=("Verdana", 20)).grid(row=0, column=0, padx=10, pady=10)
+        locationentry = tk.Entry(popup, font=("Verdana", 20))
+        locationentry.grid(row=1, column=0, padx=10, pady=10)
+
+        submitbutton = tk.Button(popup, text="ADD", font=("Verdana", 20), command = lambda: add(locationentry.get())).grid(row=2, column=0, padx=10, pady=10)
+
+        errorlabel = tk.Label(popup, font=("Verdana", 10))
+        errorlabel.grid(row=3, column=0, padx=10, pady=10)
+
+        locationremovelabel = tk.Label(popup, text="Location: ", font=("Verdana", 20)).grid(row=0, column=1, padx=10, pady=10)
         locations = bar.locations()
+        if len(locations) == 0:
+            locations = [" "]
         locvar = tk.StringVar(popup)
         locvar.set("")
         locdrop = tk.OptionMenu(popup, locvar, *locations)
         locdrop.config(font=("Verdana", 20), width= 20)
-        locdrop.grid(row=0, column=1, padx=10, pady=10)
+        locdrop.grid(row=1, column=1, padx=10, pady=10)
 
-        submitbutton = tk.Button(popup, text="SUBMIT", font=("Verdana", 20), command = lambda: submit(locvar.get())).grid(row=4, column=1, padx=10, pady=10)
+        submitbutton2 = tk.Button(popup, text="REMOVE", font=("Verdana", 20), command = lambda: remove(locvar.get())).grid(row=2, column=1, padx=10, pady=10)
 
-        def submit(location):
-            if location == "":
-                errorlabel = tk.Label(popup, text="Error: Please enter a location", fg="red", font=("Verdana", 10)).grid(row=5, column=1, padx=10, pady=10)
-            else:
-                success, status = bar.removelocation(location)
-                if success:
-                    popup.destroy()
-                    save()
-                elif status == 0:
-                    errorlabel = tk.Label(popup, text="Error: That location does not exist", fg="red", font=("Verdana", 10)).grid(row=5, column=1, padx=10, pady=10)
+        errorlabel2 = tk.Label(popup, font=("Verdana", 10))
+        errorlabel2.grid(row=3, column=1, padx=10, pady=10)
 
+
+        close = tk.Button(popup, text="CLOSE", font=("Verdana", 20), command=popup.destroy).grid(row=4, column=0, columnspan=2, padx=10, pady=10)
+
+
+
+        refresh()
         popup.mainloop()
 
-class FBPage(tk.Frame):
 
-    def __init__(self, parent, controller):
-        pass
 
 app = Tracking()
 app.geometry("1920x1080")
