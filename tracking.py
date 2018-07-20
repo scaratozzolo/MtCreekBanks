@@ -169,6 +169,8 @@ class StartPage(tk.Frame):
         save()
         quit()
 
+#TODO: update errors so they don't overlap
+
 class BarPage(tk.Frame):
 
     def __init__(self, parent, controller):
@@ -181,12 +183,11 @@ class BarPage(tk.Frame):
         currentbankinfobutton = tk.Button(self, text="CURRENT\nBANK INFO", command=self.currentbankinfo, height=4, width=10, font=("Verdana", 40, "bold"), background="cyan").grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
         makebankbutton = tk.Button(self, text='MAKE BANK', command=self.makebank, height=4, width=10, font=("Verdana", 40, "bold"), background="#ff00ee").grid(row=1, column=1, padx=10, pady=10, sticky="nsew")
         managelocbutton = tk.Button(self, text="MANAGE\nLOCATIONS", command=self.managelocs, height=4, width=10, font=("Verdana", 40, "bold"), background="#0c00ff").grid(row=1, column=2, padx=10, pady=10, sticky="nsew")
-        addbankbutton = tk.Button(self, text='ADD BANK', command=self.addbank, height=4, width=10, font=("Verdana", 40, "bold"), background="#8c00ff").grid(row=2, column=0, padx=10, pady=10, sticky="nsew")
-        removebankbutton = tk.Button(self, text='REMOVE\nBANK', command=self.removebank, height=4, width=10, font=("Verdana", 40, "bold"), background="#ff9400").grid(row=2, column=1, padx=10, pady=10, sticky="nsew")
-        banklogbutton = tk.Button(self, text="BANK LOG", command=self.banklog, height=4, width=10, font=("Verdana", 40, "bold"), background="#c896ff").grid(row=2, column=2, padx=10, pady=10, sticky="nsew")
+        testbutton = tk.Button(self, text="MANAGE\nBANKS", command=self.managebanks, height=4, width=10, font=("Verdana", 40, "bold"), background="#8c00ff").grid(row=2, column=0, padx=10, pady=10, sticky="nsew")
+        banklogbutton = tk.Button(self, text="BANK LOG", command=self.banklog, height=4, width=10, font=("Verdana", 40, "bold"), background="#c896ff").grid(row=2, column=1, padx=10, pady=10, sticky="nsew")
         backbutton = tk.Button(self, text="BACK", command=lambda: controller.show_frame(StartPage), height=4, width=10, font=("Verdana", 40, "bold"), background="#7a7a7a").grid(row=2, column=3, padx=10, pady=10, sticky="nsew")
 
-        # testbutton = tk.Button(self, text="SECRET\nTESTING", command=self.managelocs, height=4, width=10, font=("Verdana", 40, "bold"), background="black").grid(row=1, column=5, padx=10, pady=10, sticky="nsew")
+        # testbutton = tk.Button(self, text="SECRET\nTESTING", command=self.managebanks, height=4, width=10, font=("Verdana", 40, "bold"), background="black", fg="white").grid(row=1, column=5, padx=10, pady=10, sticky="nsew")
 
         self.barstats = tk.Label(self, text="Bar Banks Out: {}\n\nBar Banks In Audit: {}".format(len(bar.signedout()), len(bar.madebanks())), font=("Verdana", 20))
         self.barstats.grid(row=0, column=3, padx=10, pady=10)
@@ -208,6 +209,8 @@ class BarPage(tk.Frame):
 
         locationlabel = tk.Label(popup, text="Location: ", font=("Verdana", 20)).grid(row=1, column=0, padx=10, pady=10)
         barlocs = bar.locations()
+        if len(barlocs) == 0:
+            barlocs = [" "]
         locvar = tk.StringVar(popup)
         locvar.set("")
         locsdrop = tk.OptionMenu(popup, locvar, *barlocs)
@@ -228,6 +231,7 @@ class BarPage(tk.Frame):
         notesentry = tk.Entry(popup, font=("Verdana", 20))
         notesentry.grid(row=3, column=1, padx=10, pady=10)
 
+        close = tk.Button(popup, text="CLOSE", font=("Verdana", 20), command = popup.destroy).grid(row=4, column=0, padx=10, pady=10)
         submitbutton = tk.Button(popup, text="SUBMIT", font=("Verdana", 20), command = lambda: submit(nameentry.get(), locvar.get(), madevar.get(), notesentry.get())).grid(row=4, column=1, padx=10, pady=10)
 
         def submit(name, location, number, notes):
@@ -265,12 +269,15 @@ class BarPage(tk.Frame):
 
         banknumlabel = tk.Label(popup, text="Bank #: ", font=("Verdana", 20)).grid(row=1, column=0, padx=10, pady=10)
         barout = bar.signedout()
+        if len(barout) == 0:
+            barout = [" "]
         outvar = tk.StringVar(popup)
         outvar.set("")
         outdrop = tk.OptionMenu(popup, outvar, *barout)
         outdrop.config(font=("Verdana", 20), width= 20)
         outdrop.grid(row=1, column=1, padx=10, pady=10)
 
+        close = tk.Button(popup, text="CLOSE", font=("Verdana", 20), command = popup.destroy).grid(row=4, column=0, padx=10, pady=10)
         submitbutton = tk.Button(popup, text="SUBMIT", font=("Verdana", 20), command = lambda: submit(nameentry.get(), outvar.get())).grid(row=4, column=1, padx=10, pady=10)
 
         def submit(name, number):
@@ -309,6 +316,7 @@ class BarPage(tk.Frame):
         indrop.config(font=("Verdana", 20), width= 20)
         indrop.grid(row=1, column=1, padx=10, pady=10)
 
+        close = tk.Button(popup, text="CLOSE", font=("Verdana", 20), command = popup.destroy).grid(row=4, column=0, padx=10, pady=10)
         submitbutton = tk.Button(popup, text="SUBMIT", font=("Verdana", 20), command = lambda: submit(invar.get())).grid(row=4, column=1, padx=10, pady=10)
 
         def submit(number):
@@ -331,58 +339,6 @@ class BarPage(tk.Frame):
         popup.mainloop()
 
 
-    def addbank(self):
-        """Popup for adding bar bank"""
-        popup = tk.Tk()
-        popup.wm_title("Add Bar Bank")
-
-        banklabel = tk.Label(popup, text="Bank #: ", font=("Verdana", 20)).grid(row=0, column=0, padx=10, pady=10)
-        bankentry = tk.Entry(popup, font=("Verdana", 20))
-        bankentry.grid(row=0, column=1, padx=10, pady=10)
-
-        submitbutton = tk.Button(popup, text="SUBMIT", font=("Verdana", 20), command = lambda: submit(bankentry.get())).grid(row=4, column=1, padx=10, pady=10)
-
-        def submit(number):
-            if number == "":
-                errorlabel = tk.Label(popup, text="Error: Please enter a bank number", fg="red", font=("Verdana", 10)).grid(row=5, column=1, padx=10, pady=10)
-            else:
-                success, status = bar.addbank(number)
-                if success:
-                    popup.destroy()
-                    save()
-                elif status == 0:
-                    errorlabel = tk.Label(popup, text="Error: That bank already exists", fg="red", font=("Verdana", 10)).grid(row=5, column=1, padx=10, pady=10)
-
-        popup.mainloop()
-
-    def removebank(self):
-        """Popup for removing bar bank"""
-        popup = tk.Tk()
-        popup.wm_title("Remove Bar Bank")
-
-        banknumlabel = tk.Label(popup, text="Bank #: ", font=("Verdana", 20)).grid(row=0, column=0, padx=10, pady=10)
-        banks = bar.banks()
-        bankvar = tk.StringVar(popup)
-        bankvar.set("")
-        bankdrop = tk.OptionMenu(popup, bankvar, *banks)
-        bankdrop.config(font=("Verdana", 20), width= 20)
-        bankdrop.grid(row=0, column=1, padx=10, pady=10)
-
-        submitbutton = tk.Button(popup, text="SUBMIT", font=("Verdana", 20), command = lambda: submit(bankvar.get())).grid(row=4, column=1, padx=10, pady=10)
-
-        def submit(number):
-            if number == "":
-                errorlabel = tk.Label(popup, text="Error: Please enter a bank number", fg="red", font=("Verdana", 10)).grid(row=5, column=1, padx=10, pady=10)
-            else:
-                success, status = bar.removebank(number.split("#")[-1])
-                if success:
-                    popup.destroy()
-                    save()
-                elif status == 0:
-                    errorlabel = tk.Label(popup, text="Error: That bank does not exist", fg="red", font=("Verdana", 10)).grid(row=5, column=1, padx=10, pady=10)
-
-        popup.mainloop()
-
     def makebank(self):
         """Popup for making bar bank"""
         popup = tk.Tk()
@@ -390,6 +346,8 @@ class BarPage(tk.Frame):
 
         banknumlabel = tk.Label(popup, text="Bank #: ", font=("Verdana", 20)).grid(row=0, column=0, padx=10, pady=10)
         returnedbanks = bar.returnedbanks()
+        if len(returnedbanks) == 0:
+            returnedbanks = [" "]
         bankvar = tk.StringVar(popup)
         bankvar.set("")
         bankdrop = tk.OptionMenu(popup, bankvar, *returnedbanks)
@@ -401,6 +359,7 @@ class BarPage(tk.Frame):
         amountentry.grid(row=1, column=1, padx=10, pady=10)
         amountentry.insert(0, "350")
 
+        close = tk.Button(popup, text="CLOSE", font=("Verdana", 20), command = popup.destroy).grid(row=4, column=0, padx=10, pady=10)
         submitbutton = tk.Button(popup, text="SUBMIT", font=("Verdana", 20), command = lambda: submit(bankvar.get(), amountentry.get())).grid(row=4, column=1, padx=10, pady=10)
 
         def submit(number, amount):
@@ -442,51 +401,59 @@ class BarPage(tk.Frame):
         banks = bar.banks()
         bankvar = tk.StringVar(popup)
         bankvar.set("")
-        bankdrop = tk.OptionMenu(popup, bankvar, *banks)
+        bankdrop = tk.OptionMenu(popup, bankvar, *banks, command = lambda x: submit(bankvar.get()))
         bankdrop.config(font=("Verdana", 20), width= 20)
         bankdrop.grid(row=0, column=1, padx=10, pady=10)
 
+        closebutton = tk.Button(popup, text="CLOSE", command=popup.destroy, font=("Verdana", 20))
+        closebutton.grid(row=1, column=0, padx=10, pady=10)
+        # submitbutton = tk.Button(popup, text="SUBMIT", font=("Verdana", 20), command = lambda: submit(bankvar.get()))
+        # submitbutton.grid(row=1, column=1, padx=10, pady=10)
 
-        submitbutton = tk.Button(popup, text="SUBMIT", font=("Verdana", 20), command = lambda: submit(bankvar.get()))
-        submitbutton.grid(row=1, column=1, padx=10, pady=10)
+        signoutlabel = tk.Label(popup, text="Sign Out: ", font=("Verdana", 20)).grid(row=2, column=0, padx=10, pady=10)
+        infoout = tk.Label(popup, font=("Verdana", 20))
+        infoout.grid(row=2, column=1, padx=10, pady=10)
+
+        signinlabel = tk.Label(popup, text="Sign In: ", font=("Verdana", 20)).grid(row=3, column=0, padx=10, pady=10)
+        infoin = tk.Label(popup, font=("Verdana", 20))
+        infoin.grid(row=3, column=1, padx=10, pady=10)
+
+        returnlabel = tk.Label(popup, text="Returned: ", font=("Verdana", 20)).grid(row=4, column=0, padx=10, pady=10)
+        returninfo = tk.Label(popup, font=("Verdana", 20))
+        returninfo.grid(row=4, column=1, padx=10, pady=10)
+
+        def refresh():
+            try:
+                infoout.config(text="")
+                infoin.config(text="")
+                returninfo.config(text="")
+            except:
+                pass
 
         def submit(number):
-
-            submitbutton.destroy()
-            submitbutton2 = tk.Button(popup, text="SUBMIT", font=("Verdana", 20), command = lambda: submit2(bankvar.get()))
-            submitbutton2.grid(row=1, column=1, padx=10, pady=10)
+            refresh()
+            closebutton.destroy()
 
             if number == "":
                 errorlabel = tk.Label(popup, text="Error: Please enter a bank number", fg="red", font=("Verdana", 10)).grid(row=2, column=1, padx=10, pady=10)
             else:
                 success, status = bar.signoutinfo(number.split("#")[-1])
                 if success:
-                    signoutlabel = tk.Label(popup, text="Sign Out: ", font=("Verdana", 20)).grid(row=2, column=0, padx=10, pady=10)
-                    infoout = tk.Label(popup, text="Name: {}\nTime: {}\nLocation: {}\nAmount: ${}".format(status["Name_Out"], status["Time_Out"], status["Location"], status["Amount"]), font=("Verdana", 20))
-                    infoout.grid(row=2, column=1, padx=10, pady=10)
+                    try:
+                        infoout.config(text="Name: {}\nTime: {}\nLocation: {}\nAmount: ${}\nNotes: {}".format(status["Name_Out"], status["Time_Out"], status["Location"], status["Amount"], status["Notes"]))
+                    except:
+                        infoout.config(text="Name: {}\nTime: {}\nLocation: {}\nAmount: ${}".format(status["Name_Out"], status["Time_Out"], status["Location"], status["Amount"]))
 
-                    signinlabel = tk.Label(popup, text="Sign In: ", font=("Verdana", 20)).grid(row=3, column=0, padx=10, pady=10)
-                    infoin = tk.Label(popup, text="Name: {}\nTime: {}".format(status["Name_In"], status["Time_In"]), font=("Verdana", 20))
-                    infoin.grid(row=3, column=1, padx=10, pady=10)
-                    closebutton = tk.Button(popup, text="Okay", command=popup.destroy, font=("Verdana", 20)).grid(row=5, column=1, padx=10, pady=10)
+                    infoin.config(text="Name: {}\nTime: {}".format(status["Name_In"], status["Time_In"]))
+
+
+                    try:
+                        returninfo.config(text="{}\nTime: {}".format(status["Returned"], status["Returned_Time"]))
+                    except:
+                        returninfo.config(text="{}".format(status["Returned"]))
+                    okaybutton = tk.Button(popup, text="OKAY", command=popup.destroy, font=("Verdana", 20)).grid(row=5, column=1, padx=10, pady=10)
                 elif status == 0:
                     errorlabel = tk.Label(popup, text="Error: That bank does not exist", fg="red", font=("Verdana", 10)).grid(row=2, column=1, padx=10, pady=10)
-
-            def submit2(number):
-
-                if number == "":
-                    errorlabel = tk.Label(popup, text="Error: Please enter a bank number", fg="red", font=("Verdana", 10)).grid(row=2, column=1, padx=10, pady=10)
-                else:
-                    success, status = bar.signoutinfo(number.split("#")[-1])
-                    if success:
-                        try:
-                            infoout.config(text="Name: {}\nTime: {}\nLocation: {}\nAmount: ${}\nNotes: {}".format(status["Name_Out"], status["Time_Out"], status["Location"], status["Amount"], status["Notes"]))
-                        except:
-                            infoout.config(text="Name: {}\nTime: {}\nLocation: {}\nAmount: ${}".format(status["Name_Out"], status["Time_Out"], status["Location"], status["Amount"]))
-
-                        infoin.config(text="Name: {}\nTime: {}".format(status["Name_In"], status["Time_In"]))
-                    elif status == 0:
-                        errorlabel = tk.Label(popup, text="Error: That bank does not exist", fg="red", font=("Verdana", 10)).grid(row=2, column=1, padx=10, pady=10)
 
         popup.mainloop()
 
@@ -519,7 +486,9 @@ class BarPage(tk.Frame):
         returnlabel = tk.Label(popup, text="Returned: ", font=("Verdana", 20)).grid(row=4, column=0, padx=10, pady=10)
         returninfo = tk.Label(popup, font=("Verdana", 20))
         returninfo.grid(row=4, column=1, padx=10, pady=10)
-        closebutton = tk.Button(popup, text="Okay", command=popup.destroy, font=("Verdana", 20)).grid(row=5, column=1, padx=10, pady=10)
+
+        closebutton = tk.Button(popup, text="CLOSE", command=popup.destroy, font=("Verdana", 20)).grid(row=5, column=0, padx=10, pady=10)
+        okaybutton = tk.Button(popup, text="OKAY", command=popup.destroy, font=("Verdana", 20)).grid(row=5, column=1, padx=10, pady=10)
 
         def refresh():
             try:
@@ -537,14 +506,6 @@ class BarPage(tk.Frame):
                 success, status = bar.banklog(number.split("#")[-1])
                 if success:
 
-
-                    dates = [i for i in status]
-                    datevar.set("")
-                    datesdrop = tk.OptionMenu(popup, datevar, *dates, command = lambda x: submit2(datevar.get()))
-                    datesdrop.config(font=("Verdana", 20), width= 20)
-                    datesdrop.grid(row=1, column=1, padx=10, pady=10)
-
-
                     def submit2(date):
                         try:
                             infoout.config(text="Name: {}\nTime: {}\nLocation: {}\nAmount: ${}\nNotes: {}".format(status[date]["Name_Out"], status[date]["Time_Out"], status[date]["Location"], status[date]["Amount"], status[date]["Notes"]))
@@ -554,8 +515,80 @@ class BarPage(tk.Frame):
                         infoin.config(text="Name: {}\nTime: {}".format(status[date]["Name_In"], status[date]["Time_In"]))
                         returninfo.config(text="Returned: {}".format(status[date]["Returned_Time"]))
 
+                    dates = [i for i in status]
+                    datevar.set("")
+                    datesdrop = tk.OptionMenu(popup, datevar, *dates, command = lambda x: submit2(datevar.get()))
+                    datesdrop.config(font=("Verdana", 20), width= 20)
+                    datesdrop.grid(row=1, column=1, padx=10, pady=10)
+
                 elif status == 0:
                     errorlabel = tk.Label(popup, text="Error: That bank does not exist", fg="red", font=("Verdana", 10)).grid(row=2, column=1, padx=10, pady=10)
+
+        popup.mainloop()
+
+
+    def managebanks(self):
+        """Popup for adding/removing bar banks"""
+        popup = tk.Tk()
+        popup.wm_title("Add Bar Bank")
+
+        banklabel = tk.Label(popup, text="Bank #: ", font=("Verdana", 20)).grid(row=0, column=0, padx=10, pady=10)
+        bankentry = tk.Entry(popup, font=("Verdana", 20))
+        bankentry.grid(row=1, column=0, padx=10, pady=10)
+
+        errorlabel = tk.Label(popup, font=("Verdana", 10))
+        errorlabel.grid(row=2, column=0, padx=10, pady=10)
+
+        submitbutton = tk.Button(popup, text="SUBMIT", font=("Verdana", 20), command = lambda: add(bankentry.get())).grid(row=3, column=0, padx=10, pady=10)
+
+
+        def add(number):
+            if number == "":
+                errorlabel.config(text="Error: Please enter a bank number", fg="red")
+            else:
+                success, status = bar.addbank(number)
+                if success:
+                    errorlabel.config(text="Successfully added bank", fg="blue")
+                    save()
+                    refresh()
+                elif status == 0:
+                    errorlabel.config(text="Error: That bank already exists", fg="red")
+
+
+        banknumlabel = tk.Label(popup, text="Bank #: ", font=("Verdana", 20)).grid(row=0, column=1, padx=10, pady=10)
+        banks = bar.banks()
+        if len(banks) == 0:
+            banks = [" "]
+        bankvar = tk.StringVar(popup)
+        bankvar.set("")
+        bankdrop = tk.OptionMenu(popup, bankvar, *banks)
+        bankdrop.config(font=("Verdana", 20), width= 20)
+        bankdrop.grid(row=1, column=1, padx=10, pady=10)
+
+        errorlabel2 = tk.Label(popup, font=("Verdana", 10))
+        errorlabel2.grid(row=2, column=1, padx=10, pady=10)
+
+        submitbutton = tk.Button(popup, text="SUBMIT", font=("Verdana", 20), command = lambda: remove(bankvar.get())).grid(row=3, column=1, padx=10, pady=10)
+
+        def remove(number):
+            if number == "":
+                errorlabel2.config(text="Error: Please enter a bank number", fg="red")
+            else:
+                success, status = bar.removebank(number.split("#")[-1])
+                if success:
+                    errorlabel2.config(text="Successfully removed bank", fg="blue")
+                    save()
+                    refresh()
+                elif status == 0:
+                    errorlabel2.config(text="Error: That bank does not exist", fg="red")
+
+        def refresh():
+            bankdrop.children['menu'].delete(0, "end")
+            for bank in bar.banks():
+                bankdrop.children['menu'].add_command(label=bank, command=lambda opt=bank: bankvar.set(opt))
+            bankvar.set("")
+
+        close = tk.Button(popup, text="CLOSE", font=("Verdana", 20), command=popup.destroy).grid(row=4, column=0, columnspan=2, padx=10, pady=10)
 
         popup.mainloop()
 
