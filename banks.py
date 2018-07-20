@@ -157,7 +157,7 @@ class Bar(object):
                 self.__locations.remove(loc)
                 return True, 0
         if not found:
-            print("Location not found")
+            print("Location not found", location)
             return False, 0
 
     def locations(self):
