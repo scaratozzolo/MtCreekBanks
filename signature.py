@@ -8,22 +8,29 @@ xold, yold = None, None
 height = 200
 width = 1000
 
-def signature(type, number, date):
-
-    if not os.path.exists('data/{}/{}-{}-{}'.format(type, date.month, date.day, date.year)):
-        os.makedirs('data/{}/{}-{}-{}'.format(type, date.month, date.day, date.year))
+def signature(type, number, date, blank=False):
+    """Function for creating and storing a signature"""
 
     popup = tk.Tk()
     def submit(widget):
-        x=popup.winfo_rootx()+widget.winfo_x()
-        y=popup.winfo_rooty()+widget.winfo_y()
-        x1=x+widget.winfo_width()
-        y1=y+widget.winfo_height()
-        savename = 'data/{}/{}-{}-{}/{}-{}-{}-{}'.format(type, date.month, date.day, date.year, type, number, date.hour, date.minute)
-        ImageGrab.grab().crop((x,y,x1,y1)).save("{}.png".format(savename))
-        popup.quit()
-        popup.destroy()
-
+        if not blank:
+            x=popup.winfo_rootx()+widget.winfo_x()
+            y=popup.winfo_rooty()+widget.winfo_y()
+            x1=x+widget.winfo_width()
+            y1=y+widget.winfo_height()
+            savename = 'data/{}/{}-{}-{}/{}-{}-{}-{}'.format(type, date.month, date.day, date.year, type, number, date.hour, date.minute)
+            ImageGrab.grab().crop((x,y,x1,y1)).save("{}.png".format(savename))
+            popup.quit()
+            popup.destroy()
+        else:
+            x=popup.winfo_rootx()+widget.winfo_x()
+            y=popup.winfo_rooty()+widget.winfo_y()
+            x1=x+widget.winfo_width()
+            y1=y+widget.winfo_height()
+            savename = 'data/blanksignature'
+            ImageGrab.grab().crop((x,y,x1,y1)).save("{}.png".format(savename))
+            popup.quit()
+            popup.destroy()
 
     drawing_area = tk.Canvas(popup, height = height, width=width)
     drawing_area.pack()
@@ -32,8 +39,14 @@ def signature(type, number, date):
     drawing_area.bind("<ButtonRelease-1>", b1up)
     submitbutton = tk.Button(popup, text="SUBMIT", font=("Verdana", 20), command = lambda: submit(drawing_area))
     submitbutton.pack()
+
+    if blank:
+        submit(drawing_area)
+    else:
+        if not os.path.exists('data/{}/{}-{}-{}'.format(type, date.month, date.day, date.year)):
+            os.makedirs('data/{}/{}-{}-{}'.format(type, date.month, date.day, date.year))
+
     popup.mainloop()
-    return "finish"
 
 
 def b1down(event):

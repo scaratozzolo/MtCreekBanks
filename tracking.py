@@ -41,6 +41,7 @@ def load():
         os.makedirs('data/bike')
         os.makedirs('data/change')
         os.makedirs('data/fanny')
+        signature("blank", "blank", datetime.now(), blank=True)
 
     try:
         with open("data/bar/bar.pickle", "rb") as f:
@@ -273,7 +274,6 @@ class BarPage(tk.Frame):
 
         popup.mainloop()
 
-
     def signinbank(self):
         """Popup for bar sign in"""
         popup = tk.Tk()
@@ -353,7 +353,6 @@ class BarPage(tk.Frame):
                     errorlabel = tk.Label(popup, text="Error: That bank is not out", fg="red", font=("Verdana", 10)).grid(row=5, column=1, padx=10, pady=10)
 
         popup.mainloop()
-
 
     def makebank(self):
         """Popup for making bar bank"""
@@ -587,7 +586,6 @@ class BarPage(tk.Frame):
         closebutton = tk.Button(popup, text="CLOSE", command=popup.destroy, font=("Verdana", 20)).grid(row=7, column=1, padx=10, pady=10)
 
         popup.mainloop()
-
 
     def managebanks(self):
         """Popup for adding/removing bar banks"""
